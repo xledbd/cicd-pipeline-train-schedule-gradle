@@ -3,5 +3,5 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm install
 COPY . .
-EXPOSE 7999
-CMD npm start -- --port 7999
+EXPOSE 3000
+CMD npm start
