@@ -1,5 +1,8 @@
 pipeline {
   agent any
+  environment {
+    DOCKER_IMAGE_NAME = "xledbd/train-schedule"
+  }
   stages {
     stage('Build') {
       steps {
@@ -14,7 +17,7 @@ pipeline {
       }
       steps {
         script {
-          app = docker.build("xledbd/train-schedule")
+          app = docker.build(DOCKER_IMAGE_NAME)
           app.inside {
             sh 'echo $(curl localhost:7999)'
           }
@@ -43,14 +46,7 @@ pipeline {
         milestone(1)
         withCredentials([usernamePassword(credentialsId: 'webserver_login', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]) {
           script {
-            sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_ip \"docker pull xledbd/train-schedule:${env.BUILD_NUMBER}\""
-            try {
-            sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_ip \"docker stop train-schedule\""
-            sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_ip \"docker rm train-schedule\""
-            } catch (err) {
-              echo: 'caught error: $err'
-            }
-            sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_ip \"docker run --restart always --name train-schedule -p 80:3000 -d xledbd/train-schedule:${env.BUILD_NUMBER}\""
+            sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$control_ip \"envsubst < train-schedule-kube.yml | kubectl apply -f -\""
           }
         }
       }
