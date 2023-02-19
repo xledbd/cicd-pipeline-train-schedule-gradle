@@ -43,14 +43,14 @@ pipeline {
         milestone(1)
         withCredentials([sshUserPrivateKey(credentialsId: '5921f83e-940b-4420-a64f-d82570db8d65', usernameVariable: 'USERNAME', keyFileVariable: 'USERPASS')]) {
           script {
-            sh "sshpass -f $USERPASS -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_ip \"docker pull xledbd/train-schedule:${env.BUILD_NUMBER}\""
+            sh "sshpass -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_ip \"docker pull xledbd/train-schedule:${env.BUILD_NUMBER}\""
             try {
-            sh "sshpass -f $USERPASS -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_ip \"docker stop train-schedule\""
-            sh "sshpass -f $USERPASS -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_ip \"docker rm train-schedule\""
+            sh "sshpass -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_ip \"docker stop train-schedule\""
+            sh "sshpass -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_ip \"docker rm train-schedule\""
             } catch (err) {
               echo: 'caught error: $err'
             }
-            sh "sshpass -f $USERPASS -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_ip \"docker run --restart always --name train-schedule -p 80:3000 -d xledbd/train-schedule:${env.BUILD_NUMBER}\""
+            sh "sshpass -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_ip \"docker run --restart always --name train-schedule -p 80:3000 -d xledbd/train-schedule:${env.BUILD_NUMBER}\""
           }
         }
       }
