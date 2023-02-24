@@ -37,15 +37,36 @@ pipeline {
         }
       }
     }
+    stage('CanaryDeploy') {
+      when {
+        branch 'master'
+      }
+      environment {
+        CANARY_REPLICAS = 1
+      }
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'webserver_login', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]) {
+          script {
+            sh "envsubst < ./train-schedule-kube-canary.yml > /tmp/train-schedule-kube-canary.yml && sshpass -p '$USERPASS' -v scp /tmp/train-schedule-kube-canary.yml $USERNAME@$control_ip:/tmp/ && rm /tmp/train-schedule-kube-canary.yml"
+            sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$control_ip \"kubectl apply -f /tmp/train-schedule-kube-canary.yml && rm /tmp/train-schedule-kube-canary.yml\""
+          }
+        }
+      }
+    }
     stage('DeployToProduction') {
       when {
         branch 'master'
+      }
+      environment {
+        CANARY_REPLICAS = 0
       }
       steps {
         input 'Deploy to Production?'
         milestone(1)
         withCredentials([usernamePassword(credentialsId: 'webserver_login', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]) {
           script {
+            sh "envsubst < ./train-schedule-kube-canary.yml > /tmp/train-schedule-kube-canary.yml && sshpass -p '$USERPASS' -v scp /tmp/train-schedule-kube-canary.yml $USERNAME@$control_ip:/tmp/ && rm /tmp/train-schedule-kube-canary.yml"
+            sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$control_ip \"kubectl apply -f /tmp/train-schedule-kube-canary.yml && rm /tmp/train-schedule-kube-canary.yml\""
             sh "envsubst < ./train-schedule-kube.yml > /tmp/train-schedule-kube.yml && sshpass -p '$USERPASS' -v scp /tmp/train-schedule-kube.yml $USERNAME@$control_ip:/tmp/ && rm /tmp/train-schedule-kube.yml"
             sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$control_ip \"kubectl apply -f /tmp/train-schedule-kube.yml && rm /tmp/train-schedule-kube.yml\""
           }
