@@ -21,27 +21,27 @@ metadata:
   name: train-schedule-deployment-canary
   labels:
     app: train-schedule
-  spec:
-    replicas: $CANARY_REPLICAS
-    selector:
-      matchLabels:
+spec:
+  replicas: $CANARY_REPLICAS
+  selector:
+    matchLabels:
+      app: train-schedule
+      track: canary
+  template:
+    metadata:
+      labels:
         app: train-schedule
         track: canary
-    template:
-      metadata:
-        labels:
-          app: train-schedule
-          track: canary
-      spec:
-        containers:
-        - name: train-schedule
-          image: $DOCKER_IMAGE_NAME:$BUILD_NUMBER
-          ports:
-          - containerPort: 3000
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 3000
-            initialDelaySeconds: 15
-            timeoutSeconds: 1
-            periodSeconds: 10
+    spec:
+      containers:
+      - name: train-schedule
+        image: $DOCKER_IMAGE_NAME:$BUILD_NUMBER
+        ports:
+        - containerPort: 3000
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 15
+          timeoutSeconds: 1
+          periodSeconds: 10
